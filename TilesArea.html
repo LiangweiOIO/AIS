@@ -6,8 +6,7 @@
     <title>Tiles Area</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
-    <script type='text/javascript'
-        src='C:\Users\LiangweiOIO\Desktop\AIS\project\data\shanghai_10_6_305_test.js'></script>
+    <script type='text/javascript' src='.\data\shanghai_10_6_305_test.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
     <style>
         body {
@@ -183,7 +182,7 @@
         });
 
         mapboxgl.accessToken =
-            'pk.eyJ1IjoibGlhbmd3ZWlvaW8iLCJhIjoiY2t4NHAzcnE4MmFpbTJucW91dXUxbzhuNyJ9.98qZ2X4usfisdBAI657PVw';
+            'YOUR ACCESS TOKEN ';
 
         var map = new mapboxgl.Map({
             container: 'map',
@@ -472,15 +471,18 @@
                 //display-mode filter function
                 document.getElementById('filters').addEventListener('change', (event) => {
                     const mode = event.target.value;
-
+                    const hour = parseInt(document.getElementById('slider').value);
                     // update the map filter
                     if (mode === 'cluster') {
-                        updateMarkers();
                         mode_state = 'cluster';
                         map.setLayoutProperty('shipdata_dot_point', 'visibility', 'none');
-                        map.setLayoutProperty('shipdata_dot', 'visibility', 'visible');
-                        map.setLayoutProperty('shipdata_label', 'visibility', 'visible');
-
+                        if (map.getLayer('shipdata_dot')) map.removeLayer('shipdata_dot');
+                        if (map.getLayer('shipdata_label')) map.removeLayer('shipdata_label');
+                        for (const id in markersOnScreen)
+                            markersOnScreen[id].remove();
+                        map.removeSource('shipdata');
+                        createClusterMarker(hour);
+                        updateMarkers();
                     } else if (mode === 'discrete point') {
                         map.setLayoutProperty('shipdata_dot', 'visibility', 'none');
                         map.setLayoutProperty('shipdata_label', 'visibility', 'none');
@@ -490,6 +492,7 @@
                             markersOnScreen[id].remove();
 
                         map.setLayoutProperty('shipdata_dot_point', 'visibility', 'visible');
+                        map.setFilter('shipdata_dot_point', ['==', ['number', ['get', 'hour']], hour]);
                     } else {
                         console.log('error');
                     }
@@ -501,18 +504,26 @@
                     const hour = parseInt(event.target.value); //time got in the slider
 
                     // update the map
-                    if (mode_state == 'cluster') {
-                        if (map.getLayer('shipdata_dot')) map.removeLayer('shipdata_dot');
-                        if (map.getLayer('shipdata_label')) map.removeLayer('shipdata_label');
-                        for (const id in markersOnScreen)
-                            markersOnScreen[id].remove();
-                        map.removeSource('shipdata');
+                    // if (mode_state == 'cluster') {
+                    //     if (map.getLayer('shipdata_dot')) map.removeLayer('shipdata_dot');
+                    //     if (map.getLayer('shipdata_label')) map.removeLayer('shipdata_label');
+                    //     for (const id in markersOnScreen)
+                    //         markersOnScreen[id].remove();
+                    //     map.removeSource('shipdata');
 
-                        createClusterMarker(hour);
-                    } else if (mode_state == 'discrete point') {
-                        map.setFilter('shipdata_dot_point', ['==', ['number', ['get', 'hour']], hour]);
-                    }
+                    //     createClusterMarker(hour);
+                    // } else if (mode_state == 'discrete point') {
+                    //     map.setFilter('shipdata_dot_point', ['==', ['number', ['get', 'hour']], hour]);
+                    // }
+                    if (map.getLayer('shipdata_dot')) map.removeLayer('shipdata_dot');
+                    if (map.getLayer('shipdata_label')) map.removeLayer('shipdata_label');
+                    for (const id in markersOnScreen)
+                        markersOnScreen[id].remove();
+                    map.removeSource('shipdata');
 
+                    createClusterMarker(hour);
+
+                    map.setFilter('shipdata_dot_point', ['==', ['number', ['get', 'hour']], hour])
 
                     // converting 0-23 hour to AMPM format
                     const ampm = hour >= 12 ? 'PM' : 'AM';
